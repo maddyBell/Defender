@@ -41,8 +41,11 @@ public class TerrainGeneration : MonoBehaviour
     //Getting the position of the map centre for castle spawns
     private Vector2Int mapCentre;
 
-    //nav mesh variables 
-
+    //Open spaces sed to spawn evironmental decor
+    private Vector3[] openSpaces;
+     public GameObject[] trees, grass, rocks;
+    public int numberOfTrees, numberOfGrass, numberOfRocks;
+    private TerrainDecoration terrainDecoration;
 
 
 
@@ -51,6 +54,9 @@ public class TerrainGeneration : MonoBehaviour
     {
         //Setting up the map centre and generating the terrain
         mapCentre = new Vector2Int(width / 2, height / 2);
+        terrainDecoration = new TerrainDecoration(trees, grass, rocks, numberOfTrees, numberOfGrass, numberOfRocks);
+        GenerateTerrainMap(); 
+        terrainDecoration.PlaceDecoration(openSpaces);
     }
 
     public void GenerateTerrainMap()
@@ -109,7 +115,8 @@ public class TerrainGeneration : MonoBehaviour
         //Spawning in the grass tiles
 
         defenderAreas = new List<GameObject>();
-
+        openSpaces = new Vector3[(width * height) - (defenderAreas.Count + (castleSize.x * castleSize.y))]; // setting up the open spaces array to be used for enviro decor spawning
+        int openSpaceIndex = 0;
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < height; y++)
@@ -130,6 +137,10 @@ public class TerrainGeneration : MonoBehaviour
                 {
                     defenderAreas.Add(grassTile);
                 }
+                Debug.Log(openSpaces.Length);
+                openSpaces[openSpaceIndex] = position; // adding the position of open space to the array
+                openSpaceIndex++; // keeping track of the index to stop overwriting
+                
             }
         }
 
@@ -153,7 +164,13 @@ public class TerrainGeneration : MonoBehaviour
 
         pathMeshObject = new GameObject("PathMesh");
         pathMeshObject.transform.parent = transform;
-        pathMeshObject.layer = LayerMask.NameToLayer("Walkable");
+        int walkableLayer = LayerMask.NameToLayer("Walkable");
+        if (walkableLayer == -1)
+        {
+             Debug.LogError("Layer 'Walkable' does not exist!");
+             walkableLayer = 0; // fallback to Default
+        }
+        pathMeshObject.layer = walkableLayer;
 
         MeshFilter meshFilter = pathMeshObject.AddComponent<MeshFilter>();
         MeshRenderer meshRenderer = pathMeshObject.AddComponent<MeshRenderer>();
@@ -267,8 +284,8 @@ public class TerrainGeneration : MonoBehaviour
     private bool CastleInterior(int x, int y)
     {
         // getting the coords that fall inside the castle space to help with PAthing
-        int halfWidth = castleSize.x / 2;
-        int halfHeight = castleSize.y / 2;
+        int halfWidth = castleSize.x/2;
+        int halfHeight = castleSize.y/2;
 
         return (x >= mapCentre.x - halfWidth && x < mapCentre.x + halfWidth &&
                 y >= mapCentre.y - halfHeight && y < mapCentre.y + halfHeight);
