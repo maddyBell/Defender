@@ -43,9 +43,11 @@ public class TerrainGeneration : MonoBehaviour
 
     //Open spaces sed to spawn evironmental decor
     private Vector3[] openSpaces;
-     public GameObject[] trees, grass, rocks;
+    public GameObject[] trees, grass, rocks;
     public int numberOfTrees, numberOfGrass, numberOfRocks;
     private TerrainDecoration terrainDecoration;
+
+    public int forestInset = 3;
 
 
 
@@ -55,8 +57,9 @@ public class TerrainGeneration : MonoBehaviour
         //Setting up the map centre and generating the terrain
         mapCentre = new Vector2Int(width / 2, height / 2);
         terrainDecoration = new TerrainDecoration(trees, grass, rocks, numberOfTrees, numberOfGrass, numberOfRocks);
-        GenerateTerrainMap(); 
+        GenerateTerrainMap();
         terrainDecoration.PlaceDecoration(openSpaces);
+        
     }
 
     public void GenerateTerrainMap()
@@ -140,7 +143,7 @@ public class TerrainGeneration : MonoBehaviour
                 Debug.Log(openSpaces.Length);
                 openSpaces[openSpaceIndex] = position; // adding the position of open space to the array
                 openSpaceIndex++; // keeping track of the index to stop overwriting
-                
+
             }
         }
 
@@ -167,8 +170,8 @@ public class TerrainGeneration : MonoBehaviour
         int walkableLayer = LayerMask.NameToLayer("Walkable");
         if (walkableLayer == -1)
         {
-             Debug.LogError("Layer 'Walkable' does not exist!");
-             walkableLayer = 0; // fallback to Default
+            Debug.LogError("Layer 'Walkable' does not exist!");
+            walkableLayer = 0; // fallback to Default
         }
         pathMeshObject.layer = walkableLayer;
 
@@ -184,6 +187,10 @@ public class TerrainGeneration : MonoBehaviour
         pathNavMesh = pathMeshObject.AddComponent<NavMeshSurface>();
         pathNavMesh.collectObjects = CollectObjects.All;
         pathNavMesh.BuildNavMesh();
+
+        //spawning the border forest 
+
+        terrainDecoration.SpawnBorderForest(EdgePositions(heightMap, forestInset), trees, forestInset, 0.9f, 0.4f);
     }
 
     private List<Vector2> PathStarts()
@@ -284,8 +291,8 @@ public class TerrainGeneration : MonoBehaviour
     private bool CastleInterior(int x, int y)
     {
         // getting the coords that fall inside the castle space to help with PAthing
-        int halfWidth = castleSize.x/2;
-        int halfHeight = castleSize.y/2;
+        int halfWidth = castleSize.x / 2;
+        int halfHeight = castleSize.y / 2;
 
         return (x >= mapCentre.x - halfWidth && x < mapCentre.x + halfWidth &&
                 y >= mapCentre.y - halfHeight && y < mapCentre.y + halfHeight);
@@ -371,6 +378,27 @@ public class TerrainGeneration : MonoBehaviour
 
         return pMesh;
     }
+    
+ private List<Vector3> EdgePositions(float[,] heightMap, int inset)
+{
+    List<Vector3> edges = new List<Vector3>();
+
+    // Bottom and Top rows with inset
+    for (int x = inset; x < width - inset; x++)
+    {
+        edges.Add(new Vector3(x, heightMap[x, inset], inset)); //getting bottom
+        edges.Add(new Vector3(x, heightMap[x, height - 1 - inset], height - 1 - inset)); //getting top
+    }
+
+    // Left and Right columns with inset 
+    for (int y = inset + 1; y < height - 1 - inset; y++)
+    {
+        edges.Add(new Vector3(inset, heightMap[inset, y], y));//getting left
+        edges.Add(new Vector3(width - 1 - inset, heightMap[width - 1 - inset, y], y)); //getting right
+    }
+    //adding insets to pull it in a bit more and flesh the forest out a bit so its not a single lined wall
+    return edges;
+}
 
 
 }

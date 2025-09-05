@@ -50,5 +50,33 @@ public class TerrainDecoration
             decorPlaced++;
         }
     }
+
+public void SpawnBorderForest(List<Vector3> edgePositions , GameObject[] treePrefabs, int layers = 2, float density = 0.85f, float offsetRange = 0.5f)
+{
+    for (int inset = 0; inset < layers; inset++)
+    {
+        
+
+        foreach (Vector3 pos in edgePositions)
+        {
+            if (UnityEngine.Random.value <= density)
+            {
+                Vector3 randomOffset = new Vector3(
+                    UnityEngine.Random.Range(-offsetRange, offsetRange),
+                    0,
+                    UnityEngine.Random.Range(-offsetRange, offsetRange)
+                );
+
+                Vector3 spawnPos = pos + randomOffset;
+
+                GameObject treePrefab = treePrefabs[UnityEngine.Random.Range(0, treePrefabs.Length)];
+                Quaternion rot = Quaternion.Euler(0, UnityEngine.Random.Range(0f, 360f), 0);
+
+                GameObject.Instantiate(treePrefab, spawnPos, rot);
+            }
+        }
+    }
+}
+    
    
 }
