@@ -1,53 +1,47 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class Enemy : MonoBehaviour
 {
-    private EnemyDetails details;
+    private EnemyDetails data;
     private int currentHealth;
-    private float nextAttack = 0f;
+    private EnemySpawner spawner;
+    private float nextAttackTime = 0f;
 
-    private EnemySpawner enemySpawner;
-
-    public void Initialize(EnemyDetails enemyDetails)
+    public void Initialize(EnemyDetails enemyData, EnemySpawner spawner)
     {
-        details = enemyDetails;
-        currentHealth = details.health;
-        gameObject.name = details.enemyName;
-        enemySpawner = FindObjectOfType<EnemySpawner>();
+        this.data = enemyData;
+        this.spawner = spawner;
+        this.currentHealth = data.health;
     }
 
-    public int GetTowerDamage() => details.towerDamage;
-    public float GetMoveSpeed() => details.movementSpeed;
-
-    public void TakeDamage(int damageAmount)
+    public void TakeDamage(int amount)
     {
-        currentHealth -= damageAmount;
-        Debug.Log(currentHealth);
+        currentHealth -= amount;
+
         if (currentHealth <= 0)
         {
             Die();
         }
     }
 
-    public bool AttacKTower()
-    {
-        if (Time.time >= nextAttack)
-        {
-            nextAttack = Time.time + details.attackSpeed;
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
-
     private void Die()
     {
-        Debug.Log(details.enemyName + " died");
-        enemySpawner.OnEnemyKilled();
+
+        spawner?.OnEnemyKilled();
+
         Destroy(gameObject);
     }
+
+    public bool AttackTower()
+    {
+        if (Time.time >= nextAttackTime)
+        {
+            nextAttackTime = Time.time + data.attackSpeed;
+            return true;
+        }
+        return false;
+    }
+
+    public int GetTowerDamage() => data.towerDamage;
+    public float GetMoveSpeed() => data.movementSpeed;
 }

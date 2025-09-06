@@ -1,100 +1,86 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Security.Cryptography.X509Certificates;
 using UnityEngine;
 
 public class Tower : MonoBehaviour
 {
-    public int health;
-    private int maxHealth = 100;
-
+    [Header("Tower Stats")]
+    public int maxHealth = 100;
+    private int health;
     public int attackDamage = 10;
-    public float fireWait = 10f;
+
+    [Header("Projectile")]
     public GameObject projectilePrefab;
     public Transform firePoint;
+    public float fireInterval = 10f;
 
-    public float closeRangeWait = 5f;
+    [Header("Close Range")]
+    public float closeDamageInterval = 5f;
+    public int closeDamageAmount = 2;
 
+    [Header("Visuals")]
+    public Mesh midMesh;
+    public Mesh lowMesh;
+
+    // Colliders
+    public SphereCollider attackRadiusCollider;
+    public SphereCollider closeRadiusCollider;
+
+    // Tracking enemies
     private List<Transform> enemiesInRange = new List<Transform>();
     private List<Enemy> closeRangeEnemies = new List<Enemy>();
 
     private Coroutine firingCoroutine;
     private Coroutine closeRangeCoroutine;
 
-
     void Start()
     {
         health = maxHealth;
 
-    }
-
-    private void OnTriggerEnter(Collider other)
-    {
-        if (!other.CompareTag("Enemy"))
+        if (attackRadiusCollider == null || closeRadiusCollider == null)
         {
-            return;
-        }
-
-        if (other.gameObject.name.Contains("AttackRadius"))
-        {
-            if (!enemiesInRange.Contains(other.transform))
-            {
-                enemiesInRange.Add(other.transform);
-            }
-
-            if (firingCoroutine == null)
-            {
-                firingCoroutine = StartCoroutine(FireAtEnemies());
-            }
-        }
-        else if (other.gameObject.name.Contains("CloseRadius"))
-        {
-            Enemy enemy = other.GetComponentInParent<Enemy>();
-            if (enemy != null && !closeRangeEnemies.Contains(enemy))
-            {
-                closeRangeEnemies.Add(enemy);
-            }
-
-            if (closeRangeCoroutine == null)
-            {
-                closeRangeCoroutine = StartCoroutine(ApplyCloseDamage());
-            }
+            Debug.LogError("Please assign both radius colliders in the Inspector!");
         }
     }
 
-    private void OnTriggerExit(Collider other)
+    // Called by the child radius trigger scripts
+    public void EnemyEnteredAttackRadius(Transform enemy)
     {
-        if (!other.CompareTag("Enemy"))
+        if (!enemiesInRange.Contains(enemy))
+            enemiesInRange.Add(enemy);
+
+        if (firingCoroutine == null)
+            firingCoroutine = StartCoroutine(FireAtEnemies());
+    }
+
+    public void EnemyExitedAttackRadius(Transform enemy)
+    {
+        enemiesInRange.Remove(enemy);
+
+        if (enemiesInRange.Count == 0 && firingCoroutine != null)
         {
-            return;
+            StopCoroutine(firingCoroutine);
+            firingCoroutine = null;
         }
+    }
 
-        if (other.gameObject.name.Contains("AttackRadius"))
+    public void EnemyEnteredCloseRange(Enemy enemy)
+    {
+        if (!closeRangeEnemies.Contains(enemy))
+            closeRangeEnemies.Add(enemy);
+
+        if (closeRangeCoroutine == null)
+            closeRangeCoroutine = StartCoroutine(ApplyCloseDamage());
+    }
+
+    public void EnemyExitedCloseRange(Enemy enemy)
+    {
+        closeRangeEnemies.Remove(enemy);
+
+        if (closeRangeEnemies.Count == 0 && closeRangeCoroutine != null)
         {
-            if (enemiesInRange.Contains(other.transform))
-            {
-                enemiesInRange.Remove(other.transform);
-            }
-
-            if (enemiesInRange.Count == 0 && firingCoroutine != null)
-            {
-                StopCoroutine(firingCoroutine);
-                firingCoroutine = null;
-            }
-        }
-        else if (other.gameObject.name.Contains("CloseRadius"))
-        {
-            Enemy enemy = other.GetComponentInParent<Enemy>();
-            if (enemy != null && closeRangeEnemies.Contains(enemy))
-            {
-                closeRangeEnemies.Remove(enemy);
-            }
-
-            if (closeRangeEnemies.Count == 0 && closeRangeCoroutine != null)
-            {
-                StopCoroutine(closeRangeCoroutine);
-                closeRangeCoroutine = null;
-            }
+            StopCoroutine(closeRangeCoroutine);
+            closeRangeCoroutine = null;
         }
     }
 
@@ -108,13 +94,10 @@ public class Tower : MonoBehaviour
                 GameObject projectile = Instantiate(projectilePrefab, firePoint.position, Quaternion.identity);
                 Projectile projScript = projectile.GetComponent<Projectile>();
                 if (projScript != null)
-                {
                     projScript.Launch(target, attackDamage);
-                }
             }
-            yield return new WaitForSeconds(fireWait);
+            yield return new WaitForSeconds(fireInterval);
         }
-
     }
 
     private Transform ClosestEnemy()
@@ -124,14 +107,11 @@ public class Tower : MonoBehaviour
 
         foreach (Transform enemy in enemiesInRange)
         {
-            if (enemy == null)
+            if (enemy == null) continue;
+            float dist = Vector3.Distance(transform.position, enemy.position);
+            if (dist < minDistance)
             {
-                continue;
-            }
-            float distance = Vector3.Distance(transform.position, enemy.position);
-            if (distance < minDistance)
-            {
-                minDistance = distance;
+                minDistance = dist;
                 closest = enemy;
             }
         }
@@ -145,29 +125,35 @@ public class Tower : MonoBehaviour
         {
             foreach (Enemy enemy in closeRangeEnemies)
             {
-                if (enemy != null && enemy.AttacKTower())
-                {
-                    TakeDamage(enemy.GetTowerDamage());
-                }
-
+                if (enemy != null)
+                    TakeDamage(enemy.GetTowerDamage()); // enemy damage method
             }
-            yield return new WaitForSeconds(closeRangeWait);
+            yield return new WaitForSeconds(closeDamageInterval);
         }
     }
 
     public void TakeDamage(int damage)
     {
         health -= damage;
+
+        if (health <= 66 && midMesh != null)
+        {
+              GetComponent<MeshFilter>().mesh = midMesh;
+        }
+
+        if (health <= 33 && lowMesh != null)
+        {
+            GetComponent<MeshFilter>().mesh = lowMesh;
+        }
         if (health <= 0)
         {
             Die();
         }
     }
-    
+
     private void Die()
     {
-        Debug.Log("Tower Destroyed");
+        Debug.Log("Tower destroyed");
         Destroy(gameObject);
     }
-
 }

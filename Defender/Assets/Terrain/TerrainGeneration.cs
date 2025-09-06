@@ -67,140 +67,109 @@ public class TerrainGeneration : MonoBehaviour
     }
 
     public void GenerateTerrainMap()
+{
+    // Security checks
+    if (!grassPrefab)
     {
-        //Security check to ensure grass prefabs are loaded 
-
-        if (!grassPrefab)
-        {
-            Debug.LogError("Grass Prefab not assigned");
-            return;
-        }
-
-        //Security check to make sure no pre-existing terrain is present
-        if (grassTransform)
-        {
-            DestroyImmediate(grassTransform.gameObject);
-        }
-        if (castleTransform)
-        {
-            DestroyImmediate(castleTransform.gameObject);
-        }
-
-        //Setting up the transforms for the grass and castles
-        grassTransform = new GameObject("GrassTiles").transform;
-        grassTransform.parent = transform;
-        castleTransform = new GameObject("CastleTile").transform;
-        castleTransform.parent = transform;
-
-        //Making the heightmap
-
-        float[,] heightMap = new float[width + 1, height + 1]; // adding 1 to both for proper tiling
-        for (int x = 0; x <= width; x++)
-        {
-            for (int y = 0; y <= height; y++)
-            {
-                float xCoord = (float)x / width * noiseScale;
-                float yCoord = (float)y / height * noiseScale;
-                //using Perlin noise to generate the heightmap
-                heightMap[x, y] = Mathf.PerlinNoise(xCoord, yCoord) * heightMultiplier;
-            }
-        }
-
-        //Generating paths 
-
-        bool[,] pathMask = new bool[width + 1, height + 1];
-        var starts = PathStarts();
-        pathStartPositions = starts.ToArray();
-
-        foreach (var start in starts)
-        {
-            List<Vector2> path = GeneratePath(start);
-            foreach (var point in path)
-            {
-                MarkPathArea(pathMask, Mathf.RoundToInt(point.x), Mathf.RoundToInt(point.y));
-            }
-        }
-
-        //Spawning in the grass tiles
-
-        defenderAreas = new List<GameObject>();
-        openSpaces = new Vector3[(width * height) - (defenderAreas.Count + (castleSize.x * castleSize.y))]; // setting up the open spaces array to be used for enviro decor spawning
-        int openSpaceIndex = 0;
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
-            {
-                if (CastleInterior(x, y))
-                {
-                    continue; // skipping the castle interior
-                }
-                if (pathMask[x, y])
-                {
-                    continue; // skipping the castle interior
-                }
-                Vector3 position = new Vector3(x, heightMap[x, y], y);
-                GameObject grassTile = Instantiate(grassPrefab, position, Quaternion.identity);
-
-                //Checking if the tile is a path or next to a path for defender placement
-                if (DefenderArea(x, y, pathMask))
-                {
-                    defenderAreas.Add(grassTile);
-                }
-                openSpaces[openSpaceIndex] = position; // adding the position of open space to the array
-                openSpaceIndex++; // keeping track of the index to stop overwriting
-
-            }
-        }
-
-        //Spawning in the castle
-        if (castlePrefabs.Length > 0)
-        {
-            GameObject castlePrefab = castlePrefabs[UnityEngine.Random.Range(0, castlePrefabs.Length)]; // randomly choosing which caslt prefab to spawn
-            Vector3 castlePosition = new Vector3(mapCentre.x, heightMap[mapCentre.x, mapCentre.y], mapCentre.y);
-            GameObject castle = Instantiate(castlePrefab, castlePosition, Quaternion.identity);
-
-            //stating the castle as an obstacle so enemies cant walk
-            var obstacle = castle.AddComponent<NavMeshObstacle>();
-            obstacle.carving = true;
-        }
-        else
-        {
-            Debug.LogError("No Castle Prefabs assigned");
-        }
-
-        //Making Path Mesh 
-
-        pathMeshObject = new GameObject("PathMesh");
-        pathMeshObject.transform.parent = transform;
-        int walkableLayer = LayerMask.NameToLayer("Walkable");
-        if (walkableLayer == -1)
-        {
-            Debug.LogError("Layer 'Walkable' does not exist!");
-            walkableLayer = 0; // fallback to Default
-        }
-        pathMeshObject.layer = walkableLayer;
-
-        MeshFilter meshFilter = pathMeshObject.AddComponent<MeshFilter>();
-        MeshRenderer meshRenderer = pathMeshObject.AddComponent<MeshRenderer>();
-        meshRenderer.material = pathMaterial;
-
-        //making the mesh based on the mask 
-
-        meshFilter.mesh = PathNav(heightMap, pathMask);
-
-        //making the navmesh on runtime 
-        pathNavMesh = pathMeshObject.AddComponent<NavMeshSurface>();
-        pathNavMesh.collectObjects = CollectObjects.All;
-        pathNavMesh.BuildNavMesh();
-
-        //spawning the border forest 
-
-        terrainDecoration.SpawnBorderForest(EdgePositions(heightMap, forestInset), trees, forestInset, 0.9f, 0.4f);
-
-        //getting world positions of path starts to spawn enemies 
-        HeightMap = heightMap;
+        Debug.LogError("Grass Prefab not assigned");
+        return;
     }
 
+    if (grassTransform) DestroyImmediate(grassTransform.gameObject);
+    if (castleTransform) DestroyImmediate(castleTransform.gameObject);
+
+    grassTransform = new GameObject("GrassTiles").transform;
+    grassTransform.parent = transform;
+    castleTransform = new GameObject("CastleTile").transform;
+    castleTransform.parent = transform;
+
+    float[,] heightMap = new float[width + 1, height + 1];
+    for (int x = 0; x <= width; x++)
+    {
+        for (int y = 0; y <= height; y++)
+        {
+            float xCoord = (float)x / width * noiseScale;
+            float yCoord = (float)y / height * noiseScale;
+            heightMap[x, y] = Mathf.PerlinNoise(xCoord, yCoord) * heightMultiplier;
+        }
+    }
+
+    // Generate paths
+    bool[,] pathMask = new bool[width + 1, height + 1];
+    var starts = PathStarts();
+    pathStartPositions = starts.ToArray();
+
+    foreach (var start in starts)
+    {
+        List<Vector2> path = GeneratePath(start);
+        foreach (var point in path)
+        {
+            MarkPathArea(pathMask, Mathf.RoundToInt(point.x), Mathf.RoundToInt(point.y));
+        }
+    }
+
+    // Spawn grass tiles (non-walkable)
+    defenderAreas = new List<GameObject>();
+    openSpaces = new Vector3[(width * height) - (defenderAreas.Count + (castleSize.x * castleSize.y))];
+    int openSpaceIndex = 0;
+    int grassLayer = LayerMask.NameToLayer("NonWalkable"); // make sure this layer exists
+    for (int x = 0; x < width; x++)
+    {
+        for (int y = 0; y < height; y++)
+        {
+            if (CastleInterior(x, y) || pathMask[x, y]) continue;
+
+            Vector3 position = new Vector3(x, heightMap[x, y], y);
+            GameObject grassTile = Instantiate(grassPrefab, position, Quaternion.identity, grassTransform);
+            grassTile.layer = grassLayer;
+
+            // Add NavMeshModifier to ignore this object
+            var modifier = grassTile.GetComponent<NavMeshModifier>();
+            if (modifier == null) modifier = grassTile.AddComponent<NavMeshModifier>();
+            modifier.ignoreFromBuild = true;
+
+            if (DefenderArea(x, y, pathMask))
+                defenderAreas.Add(grassTile);
+
+            openSpaces[openSpaceIndex] = position;
+            openSpaceIndex++;
+        }
+    }
+
+    // Spawn castle
+    if (castlePrefabs.Length > 0)
+    {
+        GameObject castlePrefab = castlePrefabs[UnityEngine.Random.Range(0, castlePrefabs.Length)];
+        Vector3 castlePosition = new Vector3(mapCentre.x, heightMap[mapCentre.x, mapCentre.y], mapCentre.y);
+        GameObject castle = Instantiate(castlePrefab, castlePosition, Quaternion.identity, castleTransform);
+        var obstacle = castle.AddComponent<NavMeshObstacle>();
+        obstacle.carving = true;
+    }
+    else Debug.LogError("No Castle Prefabs assigned");
+
+    // Create path mesh
+    pathMeshObject = new GameObject("PathMesh");
+    pathMeshObject.transform.parent = transform;
+    pathMeshObject.layer = LayerMask.NameToLayer("Path"); // make sure this layer exists
+
+    MeshFilter meshFilter = pathMeshObject.AddComponent<MeshFilter>();
+    MeshRenderer meshRenderer = pathMeshObject.AddComponent<MeshRenderer>();
+    meshRenderer.material = pathMaterial;
+
+    meshFilter.mesh = PathNav(heightMap, pathMask);
+
+    // NavMeshSurface setup (only bake path)
+    pathNavMesh = pathMeshObject.AddComponent<NavMeshSurface>();
+    pathNavMesh.collectObjects = CollectObjects.Children; // only pathMeshObject
+    pathNavMesh.useGeometry = NavMeshCollectGeometry.RenderMeshes;
+    pathNavMesh.layerMask = 1 << LayerMask.NameToLayer("Path"); // bake only Path layer
+    pathNavMesh.BuildNavMesh();
+
+    // Spawn forest
+    terrainDecoration.SpawnBorderForest(EdgePositions(heightMap, forestInset), trees, forestInset, 0.9f, 0.4f);
+
+    HeightMap = heightMap;
+}
     private List<Vector2> PathStarts()
     {
         int numPaths = UnityEngine.Random.Range(minPath, maxPath + 1);

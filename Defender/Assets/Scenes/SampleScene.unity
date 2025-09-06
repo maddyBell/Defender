@@ -162,15 +162,9 @@ MonoBehaviour:
   pathMaterial: {fileID: 2100000, guid: 5c55a20e47e11834588bf8cfb4447844, type: 2}
   grassPrefab: {fileID: 5161567985391563191, guid: c35bd5ee0c87b844384fe8ac439faf1a, type: 3}
   castlePrefabs:
-  - {fileID: 919132149155446097, guid: 075850726f884584bbe4207a4334d2e3, type: 3}
-  - {fileID: 919132149155446097, guid: 28aa71f2bf1e7484daadd55edf836046, type: 3}
-  - {fileID: 919132149155446097, guid: 1ca0b06502260534083f6753985a7539, type: 3}
-  - {fileID: 919132149155446097, guid: f3972a019ea245d47b405fe50ccc3cbe, type: 3}
-  - {fileID: 919132149155446097, guid: 6f24d7587cd123d4dbfa3cb3388765e8, type: 3}
-  - {fileID: 919132149155446097, guid: cb57581b23b1e5145bcd1ef97350c364, type: 3}
-  - {fileID: 919132149155446097, guid: 5e5b53ca3b07322418bd969910a1a844, type: 3}
-  - {fileID: 919132149155446097, guid: 306d47c373eec6b4ca568a5f4f856327, type: 3}
-  - {fileID: 919132149155446097, guid: 61861d91157477640b39157db0fc30bc, type: 3}
+  - {fileID: 4118397456898835765, guid: fee2993f14f38984daac4ef73e5b00fe, type: 3}
+  - {fileID: 2282169735527592333, guid: b14024606c02df5488a83360cc7b8bb6, type: 3}
+  - {fileID: 53739432370857055, guid: a5f9a34aa895c2e48ae9100cf1119495, type: 3}
   castleSize: {x: 3, y: 3}
   trees:
   - {fileID: 2222111361404534124, guid: 88f2fd29f58b9734683512546acec310, type: 3}
@@ -210,6 +204,56 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &356965739
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 356965741}
+  - component: {fileID: 356965740}
+  m_Layer: 0
+  m_Name: EnemySpawner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &356965740
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 356965739}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6de00d5a6194d9e47b73385e438aff0f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  initialEnemyCount: 5
+  wavesTotal: 3
+  spawnDelay: 0.5
+  waveStartDelay: 2
+  terrain: {fileID: 72957359}
+  enemyType: {fileID: 11400000, guid: abf7420628c73ba4e943dc2706a5326b, type: 2}
+--- !u!4 &356965741
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 356965739}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 31.792265, y: -5.117739, z: -11.148695}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -515,3 +559,4 @@ SceneRoots:
   - {fileID: 705507995}
   - {fileID: 72957360}
   - {fileID: 1926279442}
+  - {fileID: 356965741}

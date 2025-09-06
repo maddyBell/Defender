@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class Projectile : MonoBehaviour
@@ -8,11 +6,12 @@ public class Projectile : MonoBehaviour
     private Transform target;
     private int damage;
 
-    public void Launch(Transform enemy, int damageValue)
+    public void Launch(Transform enemyTarget, int damageValue)
     {
-        target = enemy;
+        Debug.Log("Projectile launched at " + enemyTarget.name + " with damage " + damageValue);
+        target = enemyTarget;
         damage = damageValue;
-        Destroy(gameObject, 5f); // killing the projectile 
+        Destroy(gameObject, 8f); //destroys after 8s if it doesnt hit the enemy
     }
 
     void Update()
@@ -23,23 +22,22 @@ public class Projectile : MonoBehaviour
             return;
         }
 
-        // shooting at target
         Vector3 dir = (target.position - transform.position).normalized;
         transform.position += dir * speed * Time.deltaTime;
+        transform.forward = dir;
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.transform == target)
-        {
-            // Damaging enemys and destroying
-            Enemy enemy = other.GetComponent<Enemy>();
-            if (enemy != null)
-            {
-                enemy.TakeDamage(damage);
-            }
+        if (other == null) return;
 
+        if (other.TryGetComponent<Enemy>(out Enemy enemy))
+        {
+            enemy.TakeDamage(damage);
             Destroy(gameObject);
+            return;
         }
+
+        
     }
 }
