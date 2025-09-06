@@ -4,101 +4,89 @@ using UnityEngine;
 
 public class EnemySpawner : MonoBehaviour
 {
-    [Header("Wave Settings")]
-    public int initialEnemyCount = 5;   // base number for wave 1
-    public int wavesTotal = 3;          // total waves
-    public float spawnDelay = 0.5f;     // delay between each enemy spawn
-    public float waveStartDelay = 2f;   // delay before a new wave starts
-
-    [Header("References")]
-    public TerrainGeneration terrain;   // drag your TerrainGeneration here
-    public EnemyDetails enemyType;         // single ScriptableObject enemy type
+    [Header("Spawner Settings")]
+    public EnemyDetails enemyData;
+    public TerrainGeneration terrainGen;
+    public float spawnDelay = 2f;
+    public int baseEnemiesPerWave = 5;
+    public int waveCount = 3;
 
     private int currentWave = 0;
-    private int enemiesAlive = 0;
-    private int enemiesToSpawn;
-    private bool waveInProgress = false;
+    private int aliveEnemies = 0;
+    private bool spawning = false;
+    private Vector3 castlePosition;
+    private List<Vector3> spawnPoints;
 
-    private List<Vector3> spawnPositions;
-
-    private void Start()
+    void Start()
     {
-        StartCoroutine(InitAndRun());
+        if (!terrainGen)
+        {
+            Debug.LogError("EnemySpawner: TerrainGeneration reference not assigned!");
+            return;
+        }
+
+        spawnPoints = terrainGen.GetPathStartWorldPositions(terrainGen.HeightMap);
+        castlePosition = terrainGen.GetCastleWorldPosition();
+
+        StartCoroutine(SpawnWaveRoutine());
     }
 
-    // Wait for terrain to finish generating (HeightMap + path starts) before spawning
-    private IEnumerator InitAndRun()
+    private IEnumerator SpawnWaveRoutine()
     {
-        if (terrain == null)
+        yield return new WaitForSeconds(spawnDelay);
+
+        while (currentWave < waveCount)
         {
-            Debug.LogError("WaveSpawner: Terrain reference is null.");
-            yield break;
+            spawning = true;
+            int enemiesThisWave = baseEnemiesPerWave + (currentWave * 3);
+            aliveEnemies = enemiesThisWave;
+
+            Debug.Log($"Spawning Wave {currentWave + 1} with {enemiesThisWave} enemies.");
+
+            for (int i = 0; i < enemiesThisWave; i++)
+            {
+                SpawnEnemy();
+                yield return new WaitForSeconds(0.5f);
+            }
+
+            spawning = false;
+
+            // wait until 3/4 enemies are dead
+            yield return new WaitUntil(() => aliveEnemies <= enemiesThisWave / 4);
+
+            currentWave++;
+            if (currentWave < waveCount)
+                yield return new WaitForSeconds(spawnDelay);
         }
 
-        // wait until terrain has a HeightMap and path starts
-        while (terrain.HeightMap == null || terrain.pathStartPositions == null || terrain.pathStartPositions.Length == 0)
-        {
-            Debug.Log("WaveSpawner: waiting for terrain to generate path start positions...");
-            yield return null;
-        }
-
-        spawnPositions = terrain.GetPathStartWorldPositions(terrain.HeightMap);
-        if (spawnPositions == null || spawnPositions.Count == 0)
-        {
-            Debug.LogError("WaveSpawner: no spawn positions found on terrain.");
-            yield break;
-        }
-
-        // small delay to stabilize
-        yield return new WaitForSeconds(0.2f);
-
-        // Kick off first wave
-        StartCoroutine(StartNextWave());
+        Debug.Log("All waves completed!");
     }
 
-    private IEnumerator StartNextWave()
+    private void SpawnEnemy()
     {
-        currentWave++;
-        enemiesToSpawn = initialEnemyCount * currentWave; // scale: wave 1 -> initial*1, wave2 -> initial*2, etc.
-        Debug.Log($"WaveSpawner: Starting wave {currentWave} with {enemiesToSpawn} enemies.");
-
-        yield return new WaitForSeconds(waveStartDelay);
-
-        enemiesAlive = enemiesToSpawn;
-        waveInProgress = true;
-
-        for (int i = 0; i < enemiesToSpawn; i++)
+        if (enemyData == null || enemyData.enemyPrefab == null)
         {
-            Vector3 spawnPos = spawnPositions[Random.Range(0, spawnPositions.Count)];
-            Vector3 castlePos = terrain.GetCastleWorldPosition();
-
-            // spawn enemy (factory takes care of initialization & rotation)
-            EnemyFactory.CreateEnemy(enemyType, spawnPos, castlePos, this);
-
-            yield return new WaitForSeconds(spawnDelay);
+            Debug.LogError("EnemySpawner: EnemyData not assigned!");
+            return;
         }
+
+        Vector3 spawnPos = spawnPoints[Random.Range(0, spawnPoints.Count)];
+
+        Enemy enemy = EnemyFactory.CreateEnemy(enemyData, spawnPos, castlePosition, this);
+
+        if (enemy != null)
+            enemy.OnDeath += HandleEnemyDeath;
     }
 
-    // Called by enemies when they die
+    private void HandleEnemyDeath(Enemy enemy)
+    {
+        aliveEnemies--;
+        enemy.OnDeath -= HandleEnemyDeath;
+    }
+
+    // 🔹 Still here for compatibility
     public void OnEnemyKilled()
     {
-        enemiesAlive--;
-        if (enemiesAlive < 0) enemiesAlive = 0;
-
-        // If enough are dead (<= 25% remain), queue next wave
-        if (waveInProgress && enemiesAlive <= Mathf.CeilToInt(enemiesToSpawn * 0.25f))
-        {
-            waveInProgress = false; // prevent multiple triggers
-
-            if (currentWave < wavesTotal)
-            {
-                Debug.Log($"WaveSpawner: Threshold reached — scheduling wave {currentWave + 1}.");
-                StartCoroutine(StartNextWave());
-            }
-            else
-            {
-                Debug.Log("WaveSpawner: All waves finished.");
-            }
-        }
+        aliveEnemies = Mathf.Max(0, aliveEnemies - 1);
     }
 }

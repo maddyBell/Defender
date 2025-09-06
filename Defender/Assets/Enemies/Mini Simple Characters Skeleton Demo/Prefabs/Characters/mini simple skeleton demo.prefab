@@ -317,6 +317,8 @@ GameObject:
   - component: {fileID: 6866669519275099908}
   - component: {fileID: 5082055758231656858}
   - component: {fileID: 8630990119114701663}
+  - component: {fileID: 5106932545485940375}
+  - component: {fileID: 4024222698692965152}
   m_Layer: 0
   m_Name: mini simple skeleton demo
   m_TagString: Enemy
@@ -425,6 +427,40 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 24563e423ad13bc4f946be54ed6378f1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!195 &5106932545485940375
+NavMeshAgent:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1696834749189059949}
+  m_Enabled: 1
+  m_AgentTypeID: 0
+  m_Radius: 0.5
+  m_Speed: 3.5
+  m_Acceleration: 8
+  avoidancePriority: 50
+  m_AngularSpeed: 120
+  m_StoppingDistance: 0
+  m_AutoTraverseOffMeshLink: 1
+  m_AutoBraking: 1
+  m_AutoRepath: 1
+  m_Height: 2
+  m_BaseOffset: 0
+  m_WalkableMask: 4294967295
+  m_ObstacleAvoidanceType: 4
+--- !u!114 &4024222698692965152
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1696834749189059949}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28f6fe6299abe5244affa867f8e36795, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &1818926580354158373

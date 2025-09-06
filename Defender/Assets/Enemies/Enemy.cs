@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 
 public class Enemy : MonoBehaviour
 {
@@ -6,6 +7,8 @@ public class Enemy : MonoBehaviour
     private int currentHealth;
     private EnemySpawner spawner;
     private float nextAttackTime = 0f;
+
+    public event Action<Enemy> OnDeath; // 🔹 Event for spawner to subscribe
 
     public void Initialize(EnemyDetails enemyData, EnemySpawner spawner)
     {
@@ -26,10 +29,17 @@ public class Enemy : MonoBehaviour
 
     private void Die()
     {
-
+        // notify spawner
         spawner?.OnEnemyKilled();
 
-        Destroy(gameObject);
+        // movement/anim death handling
+        EnemyMovement move = GetComponent<EnemyMovement>();
+        if (move != null) move.Die();
+
+        GetComponent<Collider>().enabled = false;
+
+        // 🔹 Fire death event
+        OnDeath?.Invoke(this);
     }
 
     public bool AttackTower()
