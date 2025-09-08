@@ -11,14 +11,14 @@ public class EnemyMovement : MonoBehaviour
     private bool isDead = false;
 
     [Header("Settings")]
-    public float stopDistanceFromTower = 2f;      // Distance to stop from the castle
-    public float deathAnimationDuration = 2f;     // Time before destroying enemy
-         private Transform towerTarget;   // the main tower
-    private Transform currentTarget; // whoever we’re attacking right now
+    public float stopDistanceFromTower = 2f;      
+    public float deathAnimationDuration = 2f;     
+         private Transform towerTarget;   
+    private Transform currentTarget; 
 
-    public float stopDistanceFromTarget = 1.5f; // stops a bit away
-    public float attackInterval = 2f;           // how often enemy attacks
-    public int defenderDamage = 5;              // damage dealt per hit
+    public float stopDistanceFromTarget = 1.5f; 
+    public float attackInterval = 2f;           
+    public int defenderDamage = 5;             
 
     private Coroutine attackRoutine;
     private Coroutine defenderRoutine;
@@ -33,7 +33,7 @@ public class EnemyMovement : MonoBehaviour
         agent.speed = moveSpeed;
         agent.stoppingDistance = stopDistanceFromTower;
 
-        // Ensure agent is on NavMesh
+    
         if (!agent.isOnNavMesh)
         {
             NavMeshHit hit;
@@ -60,7 +60,7 @@ public class EnemyMovement : MonoBehaviour
     public void SetTarget(Transform tower)
     {
         towerTarget = tower;
-        currentTarget = towerTarget; // default
+        currentTarget = towerTarget; 
         agent.SetDestination(currentTarget.position);
     }
 
@@ -94,10 +94,10 @@ public class EnemyMovement : MonoBehaviour
 
         agent.isStopped = true;
         animator.Play("Loose");
-        Destroy(gameObject, 2f); // death animation time
+        Destroy(gameObject, 2f); 
     }
 
-    // ------------ Defender Logic ------------
+ 
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Defender"))
@@ -120,23 +120,21 @@ public class EnemyMovement : MonoBehaviour
             yield return null;
         }
 
-        // revert back to tower
         currentTarget = towerTarget;
     }
 
-    // ------------ Attacking ------------
+
     private IEnumerator AttackTarget()
     {
         while (!isDead && currentTarget != null)
         {
-            // Defender damage
+            
             if (currentTarget.CompareTag("Defender"))
             {
                 Defender def = currentTarget.GetComponent<Defender>();
                 if (def != null) def.TakeDamage(defenderDamage);
             }
 
-            // (optional) Tower damage hook here if needed later
 
             yield return new WaitForSeconds(attackInterval);
         }

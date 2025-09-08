@@ -12,7 +12,7 @@ public class Enemy : MonoBehaviour
     public Image healthbar;
     private GameManager gameManager;
 
-    public event Action<Enemy> OnDeath; // 🔹 Event for spawner to subscribe
+    public event Action<Enemy> OnDeath; 
 
     public void Initialize(EnemyDetails enemyData, EnemySpawner spawner)
     {
@@ -35,17 +35,17 @@ public class Enemy : MonoBehaviour
 
     private void Die()
     {
-        // notify spawner
+       
         spawner?.OnEnemyKilled();
 
-        // movement/anim death handling
+       
         EnemyMovement move = GetComponent<EnemyMovement>();
         if (move != null) move.Die();
 
         GetComponent<Collider>().enabled = false;
         gameManager.CollectBones();
 
-        // 🔹 Fire death event
+       
         OnDeath?.Invoke(this);
     }
 

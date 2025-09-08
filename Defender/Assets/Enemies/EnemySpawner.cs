@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class EnemySpawner : MonoBehaviour
 {
-    [Header("Spawner Settings")]
+   
     public EnemyDetails enemyData;
     public TerrainGeneration terrainGen;
     public float spawnDelay = 2f;
@@ -26,13 +26,12 @@ public class EnemySpawner : MonoBehaviour
             return;
         }
 
-        // Subscribe to terrain ready callback
         StartCoroutine(WaitForTerrainReadyAndSpawn());
     }
 
     private IEnumerator WaitForTerrainReadyAndSpawn()
     {
-        // Wait until TerrainGeneration has baked the NavMesh and exposed path positions
+       
         yield return new WaitUntil(() => terrainGen.PathStartWorldPositions != null && terrainGen.PathStartWorldPositions.Count > 0);
 
         spawnPoints = terrainGen.PathStartWorldPositions;
@@ -60,7 +59,7 @@ public class EnemySpawner : MonoBehaviour
                 yield return new WaitForSeconds(0.5f);
             }
 
-            // wait until 3/4 enemies are dead
+
             yield return new WaitUntil(() => aliveEnemies <= enemiesThisWave / 4);
 
             currentWave++;

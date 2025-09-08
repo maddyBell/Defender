@@ -6,25 +6,25 @@ using Unity.AI.Navigation;
 
 public class TerrainGeneration : MonoBehaviour
 {
-    [Header("Terrain Settings")]
+ 
     public int width = 90;
     public int length = 64;
     public float noiseScale = 15f;
     public float heightMultiplier = 2f;
 
-    [Header("Path Settings")]
+
     public int minPath = 4;
     public int maxPath = 6;
     public float pathWidth = 2f;
     public Material pathMaterial;
     public int forestInset = 3;
 
-    [Header("Prefabs")]
+  
     public GameObject grassPrefab;
     public GameObject[] castlePrefabs;
     public Vector2Int castleSize = new Vector2Int(3, 3);
 
-    [Header("Decorations (optional)")]
+  
     public GameObject[] trees;
     public GameObject[] grass;
     public GameObject[] rocks;
@@ -32,17 +32,16 @@ public class TerrainGeneration : MonoBehaviour
     public int numberOfGrass = 100;
     public int numberOfRocks = 30;
 
-    // Runtime-exposed data used by other systems
+   
     public List<GameObject> defenderAreas { get; private set; }
     public List<Vector3> PathStartWorldPositions { get; private set; }
     public Vector3 CastleWorldPosition { get; private set; }
     public float[,] HeightMap { get; private set; }
     public Vector3[] openSpaces { get; private set; }
 
-    // Internal
     private Transform grassTransform;
     private Transform castleTransform;
-    private TerrainDecoration terrainDecoration; // keep using your existing TerrainDecoration class
+    private TerrainDecoration terrainDecoration; 
     private Vector2Int mapCentre;
     private GameObject pathMeshObject;
     private NavMeshSurface pathNavMesh;
@@ -52,9 +51,8 @@ public class TerrainGeneration : MonoBehaviour
         mapCentre = new Vector2Int(width / 2, length / 2);
         terrainDecoration = new TerrainDecoration(trees, grass, rocks, numberOfTrees, numberOfGrass, numberOfRocks);
 
-        // Generate on start — you can call GenerateTerrainMap() elsewhere if needed
         GenerateTerrainMap();
-        // Optional: place decorations (this uses openSpaces)
+
         terrainDecoration?.PlaceDecoration(openSpaces);
     }
 
@@ -93,7 +91,7 @@ public class TerrainGeneration : MonoBehaviour
         // --- path generation ---
         bool[,] pathMask = new bool[width + 1, length + 1];
         List<Vector2> starts = PathStarts();
-        // store path start positions in integer coords (rounded)
+
         List<Vector2> pathStartPositions = new List<Vector2>(starts);
 
         foreach (var start in starts)
@@ -105,43 +103,42 @@ public class TerrainGeneration : MonoBehaviour
             }
         }
 
-        // --- spawn grass tiles and detect defender areas ---
+
         defenderAreas = new List<GameObject>();
         List<Vector3> tempOpenSpaces = new List<Vector3>();
 
         int grassLayer = LayerMask.NameToLayer("NonWalkable");
         int defenderLayer = LayerMask.NameToLayer("Defender");
-        // If those layers don't exist in project, NameToLayer returns -1; that's fine but recommended to create layers.
+  
 
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < length; y++)
             {
-                // Skip castle interior and path tiles
+
                 if (CastleInterior(x, y) || pathMask[x, y]) continue;
 
                 Vector3 pos = new Vector3(x, heightMap[x, y], y);
                 GameObject grassTile = Instantiate(grassPrefab, pos, Quaternion.identity, grassTransform);
 
-                // set layer if layer exists
                 if (grassLayer >= 0) grassTile.layer = grassLayer;
 
-                // ensure we have a collider for raycasts / placement checks
+
                 if (grassTile.GetComponent<Collider>() == null)
                 {
                     BoxCollider bc = grassTile.AddComponent<BoxCollider>();
-                    // Make the collider roughly the tile size
+   
                     bc.size = new Vector3(1f, 0.2f, 1f);
                     bc.center = Vector3.zero;
                 }
 
-                // ensure NavMeshModifier to ignore from build
+
                 NavMeshModifier modifier = grassTile.GetComponent<NavMeshModifier>();
                 if (modifier == null)
                     modifier = grassTile.AddComponent<NavMeshModifier>();
                 modifier.ignoreFromBuild = true;
 
-                // if adjacent to path (including diagonals), it's a defender spot
+
                 if (DefenderArea(x, y, pathMask))
                 {
                     defenderAreas.Add(grassTile);
@@ -154,10 +151,10 @@ public class TerrainGeneration : MonoBehaviour
             }
         }
 
-        // finalize open spaces array
+
         openSpaces = tempOpenSpaces.ToArray();
 
-        // --- spawn castle at center ---
+
         if (castlePrefabs != null && castlePrefabs.Length > 0)
         {
             GameObject chosen = castlePrefabs[Random.Range(0, castlePrefabs.Length)];
@@ -187,22 +184,22 @@ public class TerrainGeneration : MonoBehaviour
         if (pathMaterial != null) mr.material = pathMaterial;
         mf.mesh = BuildPathMesh(heightMap, pathMask);
 
-        // --- NavMeshSurface setup & bake ---
+    
         pathNavMesh = pathMeshObject.GetComponent<NavMeshSurface>();
         if (pathNavMesh == null) pathNavMesh = pathMeshObject.AddComponent<NavMeshSurface>();
 
         pathNavMesh.collectObjects = CollectObjects.Children;
         pathNavMesh.useGeometry = NavMeshCollectGeometry.RenderMeshes;
-        // limit to path layer if exists, otherwise use default
+
         if (pathLayer >= 0)
             pathNavMesh.layerMask = 1 << pathLayer;
         else
-            pathNavMesh.layerMask = ~0; // everything
+            pathNavMesh.layerMask = ~0; 
 
-        // build navmesh synchronously (you can do asynchronous if desired)
+     
         pathNavMesh.BuildNavMesh();
 
-        // --- store path start world positions (rounded to mesh height) ---
+     
         PathStartWorldPositions = new List<Vector3>();
         foreach (var p in pathStartPositions)
         {
@@ -211,15 +208,14 @@ public class TerrainGeneration : MonoBehaviour
             float h = heightMap[sx, sy];
             Vector3 worldPos = new Vector3(sx, h, sy);
 
-            // Snap to NavMesh if possible to make spawns safer
             NavMeshHit hit;
             if (NavMesh.SamplePosition(worldPos, out hit, 2f, NavMesh.AllAreas))
                 PathStartWorldPositions.Add(hit.position);
             else
-                PathStartWorldPositions.Add(worldPos); // fallback
+                PathStartWorldPositions.Add(worldPos); 
         }
 
-        // --- save height map reference for others ---
+
 
         HeightMap = heightMap;
          terrainDecoration.SpawnBorderForest(HeightMap, trees, 3, 0.9f, 0.4f);
@@ -357,7 +353,7 @@ public class TerrainGeneration : MonoBehaviour
         return false;
     }
 
-    // Optional helper that returns edge positions for your decoration system
+    // edge positions for decoration system
     public List<Vector3> EdgePositions(float[,] heightMap, int inset)
     {
         List<Vector3> edges = new List<Vector3>();
