@@ -1,28 +1,31 @@
 using UnityEngine;
 using System;
+using UnityEngine.UI;
 
 public class Enemy : MonoBehaviour
 {
     private EnemyDetails data;
     private int currentHealth;
+    private int maxHealth = 100;
     private EnemySpawner spawner;
     private float nextAttackTime = 0f;
+    public Image healthbar;
+    private GameManager gameManager;
 
-    private Defender currentDefenderTarget;
-    private float defenderEngageEndTime = 0f; // time to move on
-
-    public event Action<Enemy> OnDeath;
+    public event Action<Enemy> OnDeath; // 🔹 Event for spawner to subscribe
 
     public void Initialize(EnemyDetails enemyData, EnemySpawner spawner)
     {
         this.data = enemyData;
         this.spawner = spawner;
         this.currentHealth = data.health;
+        gameManager = FindObjectOfType<GameManager>();
     }
 
     public void TakeDamage(int amount)
     {
         currentHealth -= amount;
+        healthbar.fillAmount = (float)currentHealth / maxHealth;
 
         if (currentHealth <= 0)
         {
@@ -32,13 +35,17 @@ public class Enemy : MonoBehaviour
 
     private void Die()
     {
+        // notify spawner
         spawner?.OnEnemyKilled();
 
+        // movement/anim death handling
         EnemyMovement move = GetComponent<EnemyMovement>();
         if (move != null) move.Die();
 
         GetComponent<Collider>().enabled = false;
+        gameManager.CollectBones();
 
+        // 🔹 Fire death event
         OnDeath?.Invoke(this);
     }
 
@@ -54,34 +61,4 @@ public class Enemy : MonoBehaviour
 
     public int GetTowerDamage() => data.towerDamage;
     public float GetMoveSpeed() => data.movementSpeed;
-
-    // --- Defender interactions ---
-    public void EngageDefender(Defender defender)
-    {
-        currentDefenderTarget = defender;
-        defenderEngageEndTime = Time.time + 5f; // attack for 5 seconds
-        GetComponent<EnemyMovement>().MoveToDefender(defender);
-    }
-
-    private void Update()
-    {
-        if (currentDefenderTarget != null)
-        {
-            // Still within 5 seconds
-            if (Time.time < defenderEngageEndTime)
-            {
-                if (Time.time >= nextAttackTime)
-                {
-                    nextAttackTime = Time.time + data.attackSpeed;
-                    currentDefenderTarget.TakeDamage(data.towerDamage);
-                }
-            }
-            else
-            {
-                // Done engaging, move on
-                currentDefenderTarget = null;
-                GetComponent<EnemyMovement>().ResumeMoving();
-            }
-        }
-    }
 }

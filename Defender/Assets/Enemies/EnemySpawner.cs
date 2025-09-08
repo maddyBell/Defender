@@ -13,21 +13,33 @@ public class EnemySpawner : MonoBehaviour
 
     private int currentWave = 0;
     private int aliveEnemies = 0;
-    private bool spawning = false;
-    private Vector3 castlePosition;
     private List<Vector3> spawnPoints;
+    private Vector3 castlePosition;
+
+    private bool terrainReady = false;
 
     void Start()
     {
-        if (!terrainGen)
+        if (terrainGen == null)
         {
             Debug.LogError("EnemySpawner: TerrainGeneration reference not assigned!");
             return;
         }
 
-        spawnPoints = terrainGen.GetPathStartWorldPositions(terrainGen.HeightMap);
-        castlePosition = terrainGen.GetCastleWorldPosition();
+        // Subscribe to terrain ready callback
+        StartCoroutine(WaitForTerrainReadyAndSpawn());
+    }
 
+    private IEnumerator WaitForTerrainReadyAndSpawn()
+    {
+        // Wait until TerrainGeneration has baked the NavMesh and exposed path positions
+        yield return new WaitUntil(() => terrainGen.PathStartWorldPositions != null && terrainGen.PathStartWorldPositions.Count > 0);
+
+        spawnPoints = terrainGen.PathStartWorldPositions;
+        castlePosition = terrainGen.CastleWorldPosition;
+        terrainReady = true;
+
+        Debug.Log("Terrain ready, starting enemy waves.");
         StartCoroutine(SpawnWaveRoutine());
     }
 
@@ -37,19 +49,16 @@ public class EnemySpawner : MonoBehaviour
 
         while (currentWave < waveCount)
         {
-            spawning = true;
             int enemiesThisWave = baseEnemiesPerWave + (currentWave * 3);
             aliveEnemies = enemiesThisWave;
 
-            
+            Debug.Log($"Spawning Wave {currentWave + 1} with {enemiesThisWave} enemies.");
 
             for (int i = 0; i < enemiesThisWave; i++)
             {
                 SpawnEnemy();
                 yield return new WaitForSeconds(0.5f);
             }
-
-            spawning = false;
 
             // wait until 3/4 enemies are dead
             yield return new WaitUntil(() => aliveEnemies <= enemiesThisWave / 4);
@@ -58,18 +67,15 @@ public class EnemySpawner : MonoBehaviour
             if (currentWave < waveCount)
                 yield return new WaitForSeconds(spawnDelay);
         }
+
+        Debug.Log("All waves completed!");
     }
 
     private void SpawnEnemy()
     {
-        if (enemyData == null || enemyData.enemyPrefab == null)
-        {
-            Debug.LogError("EnemySpawner: EnemyData not assigned!");
-            return;
-        }
+        if (!terrainReady || enemyData == null || enemyData.enemyPrefab == null) return;
 
         Vector3 spawnPos = spawnPoints[Random.Range(0, spawnPoints.Count)];
-
         Enemy enemy = EnemyFactory.CreateEnemy(enemyData, spawnPos, castlePosition, this);
 
         if (enemy != null)
@@ -82,7 +88,6 @@ public class EnemySpawner : MonoBehaviour
         enemy.OnDeath -= HandleEnemyDeath;
     }
 
-    // 🔹 Still here for compatibility
     public void OnEnemyKilled()
     {
         aliveEnemies = Mathf.Max(0, aliveEnemies - 1);

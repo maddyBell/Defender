@@ -10,7 +10,7 @@ public class TerrainDecoration
     public int numberOfTrees, numberOfGrass, numberOfRocks;
 
     public TerrainDecoration(GameObject[] trees, GameObject[] grass, GameObject[] rocks, int numberOfTrees, int numberOfGrass, int numberOfRocks)
-    {
+    { // getting all the tree, grass and rock prefabs, and the numbers for each 
         this.trees = trees;
         this.grass = grass;
         this.rocks = rocks;
@@ -19,12 +19,14 @@ public class TerrainDecoration
         this.numberOfRocks = numberOfRocks;
     }
 
-    //a method to place the decorations on the terrain at ranom positions based on the numbber of decorations specified
+    //placing different decor at random open spots around the map
     public void PlaceDecoration(Vector3[] positions)
     {
         possiblePositions = positions;
         filledPositions = new Vector3[numberOfTrees + numberOfGrass + numberOfRocks];
         int decorPlaced = 0;
+
+        //spawning the number of tress wanted in random positions in the map, uses possible positions to avoid spawning on the tower, defender areas or paths 
         for (int i = 0; i < numberOfTrees; i++)
         {
             int randomIndex = Random.Range(0, possiblePositions.Length);
@@ -32,7 +34,8 @@ public class TerrainDecoration
             GameObject.Instantiate(trees[randomTree], possiblePositions[randomIndex], Quaternion.Euler(0, Random.Range(0, 360), 0));
             filledPositions[decorPlaced] = possiblePositions[randomIndex];
             decorPlaced++;
-        }
+        } 
+        //same
         for (int i = 0; i < numberOfGrass; i++)
         {
             int randomIndex = Random.Range(0, possiblePositions.Length);
@@ -41,6 +44,7 @@ public class TerrainDecoration
             filledPositions[decorPlaced] = possiblePositions[randomIndex];
             decorPlaced++;
         }
+        //same
         for (int i = 0; i < numberOfRocks; i++)
         {
             int randomIndex = Random.Range(0, possiblePositions.Length);
@@ -51,11 +55,15 @@ public class TerrainDecoration
         }
     }
 
-public void SpawnBorderForest(List<Vector3> edgePositions , GameObject[] treePrefabs, int layers = 2, float density = 0.85f, float offsetRange = 0.5f)
+//spawning a border around the edge of the map to hide the edge of the map and the enemy spawn positions, no functional need but trying to improve user friendliness and visual impact 
+public void SpawnBorderForest(float[,] heightMap, GameObject[] treePrefabs, int layers = 2, float density = 0.85f, float offsetRange = 0.5f)
 {
+    TerrainGeneration tg = GameObject.FindObjectOfType<TerrainGeneration>();
+    if (tg == null) return;
+
     for (int inset = 0; inset < layers; inset++)
     {
-        
+        List<Vector3> edgePositions = tg.EdgePositions(heightMap, inset);
 
         foreach (Vector3 pos in edgePositions)
         {
