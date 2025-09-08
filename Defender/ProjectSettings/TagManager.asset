@@ -7,6 +7,7 @@ TagManager:
   - Grass
   - Path
   - Enemy
+  - Defender
   layers:
   - Default
   - TransparentFX
@@ -14,7 +15,7 @@ TagManager:
   - Path
   - Water
   - UI
-  - 
+  - Defender
   - 
   - 
   - 

@@ -386,7 +386,7 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 1
+  m_Radius: 1.5
   m_Height: 2
   m_Direction: 1
   m_Center: {x: 0, y: 1, z: 0}
@@ -463,6 +463,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 28f6fe6299abe5244affa867f8e36795, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  stopDistanceFromTower: 3
+  deathAnimationDuration: 2
 --- !u!1 &1818926580354158373
 GameObject:
   m_ObjectHideFlags: 0

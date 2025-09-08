@@ -7,12 +7,12 @@ public class Tower : MonoBehaviour
     [Header("Tower Stats")]
     public int maxHealth = 100;
     private int health;
-    public int attackDamage = 10;
+    public int attackDamage = 25;
 
     [Header("Projectile")]
     public GameObject projectilePrefab;
     public Transform firePoint;
-    public float fireInterval = 10f;
+    public float fireInterval = 3f;
 
     [Header("Close Range")]
     public float closeDamageInterval = 5f;

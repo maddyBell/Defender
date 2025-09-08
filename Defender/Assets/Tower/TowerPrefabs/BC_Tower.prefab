@@ -150,10 +150,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxHealth: 100
-  attackDamage: 10
+  attackDamage: 25
   projectilePrefab: {fileID: 770281005882538898, guid: 72e0c63969dbaa44a9af49eb216a9f0a, type: 3}
   firePoint: {fileID: 8933148359286764708}
-  fireInterval: 10
+  fireInterval: 2
   closeDamageInterval: 5
   closeDamageAmount: 2
   midMesh: {fileID: -1811157707826056960, guid: 28aa71f2bf1e7484daadd55edf836046, type: 3}

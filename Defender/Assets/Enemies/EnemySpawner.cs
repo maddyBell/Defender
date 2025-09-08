@@ -41,7 +41,7 @@ public class EnemySpawner : MonoBehaviour
             int enemiesThisWave = baseEnemiesPerWave + (currentWave * 3);
             aliveEnemies = enemiesThisWave;
 
-            Debug.Log($"Spawning Wave {currentWave + 1} with {enemiesThisWave} enemies.");
+            
 
             for (int i = 0; i < enemiesThisWave; i++)
             {
@@ -58,8 +58,6 @@ public class EnemySpawner : MonoBehaviour
             if (currentWave < waveCount)
                 yield return new WaitForSeconds(spawnDelay);
         }
-
-        Debug.Log("All waves completed!");
     }
 
     private void SpawnEnemy()

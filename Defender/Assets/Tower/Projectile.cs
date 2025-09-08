@@ -8,7 +8,7 @@ public class Projectile : MonoBehaviour
 
     public void Launch(Transform enemyTarget, int damageValue)
     {
-        Debug.Log("Projectile launched at " + enemyTarget.name + " with damage " + damageValue);
+    
         target = enemyTarget;
         damage = damageValue;
         Destroy(gameObject, 8f); //destroys after 8s if it doesnt hit the enemy

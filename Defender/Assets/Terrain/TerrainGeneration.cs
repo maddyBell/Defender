@@ -14,7 +14,7 @@ public class TerrainGeneration : MonoBehaviour
     public float noiseScale = 15f, heightMultiplier = 2f;
 
     //Path Dimensions 
-    public int minPath = 3, maxPath = 6;
+    public int minPath = 4, maxPath = 6;
     public float pathWidth = 2f;
     private GameObject pathMeshObject;
     private NavMeshSurface pathNavMesh;
@@ -128,9 +128,11 @@ public class TerrainGeneration : MonoBehaviour
             if (modifier == null) modifier = grassTile.AddComponent<NavMeshModifier>();
             modifier.ignoreFromBuild = true;
 
-            if (DefenderArea(x, y, pathMask))
-                defenderAreas.Add(grassTile);
-
+                if (DefenderArea(x, y, pathMask))
+                {
+                    defenderAreas.Add(grassTile);
+                    grassTile.layer = LayerMask.NameToLayer("Defender");
+                 }
             openSpaces[openSpaceIndex] = position;
             openSpaceIndex++;
         }
