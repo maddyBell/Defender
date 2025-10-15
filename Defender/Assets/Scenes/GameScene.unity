@@ -1056,7 +1056,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6de00d5a6194d9e47b73385e438aff0f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  enemyData: {fileID: 11400000, guid: abf7420628c73ba4e943dc2706a5326b, type: 2}
+  easyEnemy: {fileID: 0}
+  mediumEnemy: {fileID: 0}
+  hardEnemy: {fileID: 0}
   terrainGen: {fileID: 72957359}
   spawnDelay: 2
   baseEnemiesPerWave: 5
@@ -3693,7 +3695,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   terrainGen: {fileID: 72957359}
-  defenderPrefab: {fileID: 1953271650171834, guid: dbf7a0c9d76b77a40af3104feac0641d, type: 3}
+  defenderPrefabs: []
   spaceRadius: 4
   highlightMaterial: {fileID: 2100000, guid: 308c9768ccff78548aabfaa6202d43ec, type: 2}
   defaultMaterial: {fileID: 2100000, guid: e13b445848194874fb214f4e61fe992d, type: 2}

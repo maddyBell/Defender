@@ -200,21 +200,24 @@ public class TerrainGeneration : MonoBehaviour
         pathNavMesh.BuildNavMesh();
 
      
-        PathStartWorldPositions = new List<Vector3>();
-        foreach (var p in pathStartPositions)
-        {
-            int sx = Mathf.Clamp(Mathf.RoundToInt(p.x), 0, width);
-            int sy = Mathf.Clamp(Mathf.RoundToInt(p.y), 0, length);
-            float h = heightMap[sx, sy];
-            Vector3 worldPos = new Vector3(sx, h, sy);
+PathStartWorldPositions = new List<Vector3>();
+foreach (var p in pathStartPositions)
+{
+    int sx = Mathf.Clamp(Mathf.RoundToInt(p.x), 0, width);
+    int sy = Mathf.Clamp(Mathf.RoundToInt(p.y), 0, length);
+    float h = heightMap[sx, sy];
+    Vector3 worldPos = new Vector3(sx, h, sy);
 
-            NavMeshHit hit;
-            if (NavMesh.SamplePosition(worldPos, out hit, 2f, NavMesh.AllAreas))
-                PathStartWorldPositions.Add(hit.position);
-            else
-                PathStartWorldPositions.Add(worldPos); 
-        }
+    Vector3 dirToCenter = (CastleWorldPosition - worldPos).normalized;
+    float spawnOffset = 3.5f; 
+    worldPos += dirToCenter * spawnOffset;
 
+    NavMeshHit hit;
+    if (NavMesh.SamplePosition(worldPos, out hit, 3f, NavMesh.AllAreas))
+        PathStartWorldPositions.Add(hit.position);
+    else
+        PathStartWorldPositions.Add(worldPos);
+}
 
 
         HeightMap = heightMap;

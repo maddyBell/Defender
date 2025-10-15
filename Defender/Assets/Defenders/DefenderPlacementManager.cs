@@ -6,7 +6,7 @@ public class DefenderPlacement : MonoBehaviour
 
 //getting the references needed to place the defenders, get the spots to place them and play with the materials 
     public TerrainGeneration terrainGen;
-    public GameObject defenderPrefab;
+    public GameObject [] defenderPrefabs;
     public float spaceRadius = 1f; 
     public Material highlightMaterial;
     public Material defaultMaterial;
@@ -15,7 +15,8 @@ public class DefenderPlacement : MonoBehaviour
     public LayerMask placementLayer; 
     public bool isPlacing = false;
     public GameManager gameManager;
-    public int defenderCost = 5;    
+    public int defenderCost = 5;
+    private int currentDefenderIndex = -1;
 
     //private variables, getting the tower in scene, making a list for the defender placements and object for the preview ghost thign 
     private Tower tower;
@@ -38,17 +39,24 @@ public class DefenderPlacement : MonoBehaviour
     }
 
     //run on the defender button click, highlights the spots the defenders can be places and makes the preview 
-    public void EnterPlacementMode()
+    public void EnterPlacementMode(int defenderIndex)
     {
+        if (defenderIndex < 0 || defenderIndex >= defenderPrefabs.Length)
+        {
+            Debug.LogError("Invalid defender index!");
+            return;
+        }
+
+        currentDefenderIndex = defenderIndex;
         isPlacing = true;
         ShowValidSpots(true);
 
-        // Spawn preview defender if it doesn’t exist
-        if (!previewDefender)
-        {
-            previewDefender = Instantiate(defenderPrefab);
-            SetPreviewMaterial(previewDefender, validPreviewMaterial);
-        }
+        // Remove old preview if any
+        if (previewDefender) Destroy(previewDefender);
+
+        // Spawn preview for selected defender
+        previewDefender = Instantiate(defenderPrefabs[currentDefenderIndex]);
+        SetPreviewMaterial(previewDefender, validPreviewMaterial);
     }
 
     //exits the placement mode, removes the highlights and destroys the preview object
@@ -148,10 +156,16 @@ public class DefenderPlacement : MonoBehaviour
 
 //soawning the defender in the spot the player clicked on and adding it to the list
     private void SpawnDefender(GameObject place)
+{
+    if (currentDefenderIndex < 0 || currentDefenderIndex >= defenderPrefabs.Length)
     {
-        GameObject defender = Instantiate(defenderPrefab, place.transform.position, Quaternion.identity);
-        defenderSpots.Add(defender);
+        Debug.LogError("No valid defender selected for placement!");
+        return;
     }
+
+    GameObject defender = Instantiate(defenderPrefabs[currentDefenderIndex], place.transform.position, Quaternion.identity);
+    defenderSpots.Add(defender);
+}
 
 //running checks to see if a spot is free, uses the space radius so the player cant put too many defenders on top of each other and overload an area
     bool IsSpotFree(GameObject spot)

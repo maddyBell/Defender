@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 127c8b3df33ba2940808e01c4c0734e3, type: 3}
+  m_Name: OrcEnemy
+  m_EditorClassIdentifier: 
+  enemyName: Orc
+  health: 100
+  towerDamage: 5
+  defenderDamage: 20
+  attackSpeed: 15
+  movementSpeed: 0.5
+  enemyPrefab: {fileID: 2478072443969969506, guid: 9480280a76bfc5a408429b59bdf5609d, type: 3}

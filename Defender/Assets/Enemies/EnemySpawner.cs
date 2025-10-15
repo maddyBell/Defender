@@ -5,11 +5,15 @@ using UnityEngine;
 public class EnemySpawner : MonoBehaviour
 {
    
-    public EnemyDetails enemyData;
+    public EnemyDetails easyEnemy;
+    public EnemyDetails mediumEnemy;
+    public EnemyDetails hardEnemy;
+
+   
     public TerrainGeneration terrainGen;
     public float spawnDelay = 2f;
     public int baseEnemiesPerWave = 5;
-    public int waveCount = 3;
+    public int waveCount = 5;
 
     private int currentWave = 0;
     private int aliveEnemies = 0;
@@ -31,7 +35,6 @@ public class EnemySpawner : MonoBehaviour
 
     private IEnumerator WaitForTerrainReadyAndSpawn()
     {
-       
         yield return new WaitUntil(() => terrainGen.PathStartWorldPositions != null && terrainGen.PathStartWorldPositions.Count > 0);
 
         spawnPoints = terrainGen.PathStartWorldPositions;
@@ -48,10 +51,11 @@ public class EnemySpawner : MonoBehaviour
 
         while (currentWave < waveCount)
         {
-            int enemiesThisWave = baseEnemiesPerWave + (currentWave * 3);
+            // Enemy count scaling formula
+            int enemiesThisWave = Mathf.RoundToInt(baseEnemiesPerWave * Mathf.Pow(1.2f, currentWave));
             aliveEnemies = enemiesThisWave;
 
-            Debug.Log($"Spawning Wave {currentWave + 1} with {enemiesThisWave} enemies.");
+            Debug.Log($"[Wave {currentWave + 1}] Spawning {enemiesThisWave} enemies.");
 
             for (int i = 0; i < enemiesThisWave; i++)
             {
@@ -59,7 +63,7 @@ public class EnemySpawner : MonoBehaviour
                 yield return new WaitForSeconds(0.5f);
             }
 
-
+            // Wait until most enemies are dead before next wave
             yield return new WaitUntil(() => aliveEnemies <= enemiesThisWave / 4);
 
             currentWave++;
@@ -72,13 +76,45 @@ public class EnemySpawner : MonoBehaviour
 
     private void SpawnEnemy()
     {
-        if (!terrainReady || enemyData == null || enemyData.enemyPrefab == null) return;
+        if (!terrainReady) return;
 
         Vector3 spawnPos = spawnPoints[Random.Range(0, spawnPoints.Count)];
-        Enemy enemy = EnemyFactory.CreateEnemy(enemyData, spawnPos, castlePosition, this);
+        EnemyDetails selectedEnemy = SelectEnemyType();
+
+        if (selectedEnemy == null || selectedEnemy.enemyPrefab == null)
+        {
+            Debug.LogWarning("EnemySpawner: Missing enemy prefab data!");
+            return;
+        }
+
+        Enemy enemy = EnemyFactory.CreateEnemy(selectedEnemy, spawnPos, castlePosition, this);
 
         if (enemy != null)
             enemy.OnDeath += HandleEnemyDeath;
+    }
+
+    private EnemyDetails SelectEnemyType()
+    {
+        // Difficulty weighting increases with wave progression
+        float easyWeight = Mathf.Clamp01(1f - (currentWave * 0.2f));   // starts high, drops fast
+        float mediumWeight = Mathf.Clamp01(0.4f + (currentWave * 0.1f)); // mid curve
+        float hardWeight = Mathf.Clamp01(currentWave * 0.2f);            // starts low, increases steadily
+
+        // Normalize weights
+        float total = easyWeight + mediumWeight + hardWeight;
+        easyWeight /= total;
+        mediumWeight /= total;
+        hardWeight /= total;
+
+        // Randomized selection
+        float rand = Random.value;
+
+        if (rand < easyWeight)
+            return easyEnemy;
+        else if (rand < easyWeight + mediumWeight)
+            return mediumEnemy;
+        else
+            return hardEnemy;
     }
 
     private void HandleEnemyDeath(Enemy enemy)
